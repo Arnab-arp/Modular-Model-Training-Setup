@@ -3,7 +3,7 @@ import gc
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import ImageFolder
 from torch.utils.data import random_split
-from modules.data_trainsforms import(
+from data_trainsforms import(
     TRAIN_TRANSFORM,
     TEST_TRANSFORM,
     VALIDATION_TRANSFORM
@@ -40,8 +40,11 @@ def LoadDataFromPath(train_path, val_path, test_path, batch_size=32, verbose=Tru
                                 shuffle=False,
                                 batch_size=batch_size,
                                 num_workers=workers)
-        input_shape = list(next(iter(train_loader)).shape)[1] #[Batch Size, Color Channels, Height, Width]
+
+        first_batch_images = next(iter(train_loader))[0]
+        input_shape = list(first_batch_images.shape)[1] 
         output_shape = len(classes)
+
         if verbose:
             print("Data Loaded")
             m = f"""
@@ -120,7 +123,9 @@ def LoadDataSplit(data_dir, ratio=(0.75, 0.15, 0.1), batch_size=32, verbose=True
                                 shuffle=False,
                                 batch_size=batch_size,
                                 num_workers=workers)
-        input_shape = list(next(iter(train_loader)).shape)[1] #[Batch Size, Color Channels, Height, Width]
+        
+        first_batch_images = next(iter(train_loader))[0]
+        input_shape = list(first_batch_images.shape)[1] 
         output_shape = len(classes)
 
         if verbose:
@@ -151,4 +156,4 @@ Image Shape : {list(next(iter(train_loader))[0].shape)}
 
 if __name__ == "__main__":
     ds_pth = r"C:\Users\Arnab\Desktop\Small"
-    LoadDataSplit(data_dir=ds_pth, batch_size=1)
+    train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx = LoadDataSplit(data_dir=ds_pth, batch_size=1)

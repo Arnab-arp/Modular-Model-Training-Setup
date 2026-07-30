@@ -4,10 +4,10 @@ from torch import nn
 from torch.onnx import export
 import onnxruntime as ort
 
-def measure_time(start, end, device=None, stepper_fn=False):
+def measure_time(start, end, device=None, stepper=False):
     measurement = f"{(end-start):.2f} sec"
-    if stepper_fn:
-        print(f'Step Run Time : {measurement}')
+    if stepper:
+        print(f'[*] Step Run Time : {measurement}')
     else:
         print(f'''
 ----- Time -----
@@ -29,7 +29,8 @@ def PerformanceGraph(results):
 def save_model(model: nn.Module, 
                model_name: str, 
                format:str,
-               device:str ='cuda' if torch.cuda.is_available() else "cpu"):
+               device:str ='cuda' if torch.cuda.is_available() else "cpu",
+               **kwargs):
     
     abs_path = os.path.join(os.getcwd(), "trained_models")
     os.makedirs(abs_path, exist_ok=True)
@@ -40,11 +41,12 @@ def save_model(model: nn.Module,
             f=model_path
         )
         print(f"Model successfully saved to {model_path}")
-        return
+        return model_path
+    
     elif format.lower() == '.onnx':
+        dummy_input = kwargs['dummy_input']
         model.eval()
         model.to(device)
-        dummy_input = torch.rand(1, 3, 224, 224).to(device)
         export(
             model,
             dummy_input,
@@ -58,7 +60,10 @@ def save_model(model: nn.Module,
             }
         )
         print(f"ONNX model successfully exported to {model_path}")
-    return
+        return model_path
+    else:
+        raise ValueError(f"Unsupported format '{format}'. Please use '.pt' or '.onnx'.")
+
 
 
 def load_model(model_path: str, 

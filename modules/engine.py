@@ -52,6 +52,7 @@ def eval_step(model: torch.nn.Module,
 
     return val_loss, val_accuracy
 
+
 def EvaluateOnTest_pt(model: torch.nn.Module, 
                data_loader: torch.utils.data.DataLoader,  
                device: torch.device):
@@ -66,6 +67,7 @@ def EvaluateOnTest_pt(model: torch.nn.Module,
     mean_accuracy = accuracy/len(data_loader)
 
     return mean_accuracy
+
 
 def EvaluateOnTest_onnx(ort_session:ort.InferenceSession, 
                         data_loader: torch.utils.data.DataLoader):

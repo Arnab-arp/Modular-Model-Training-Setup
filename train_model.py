@@ -1,13 +1,59 @@
 from argparse import ArgumentParser
 from modules.model_registry import Registry
+import torch
+import gc
+from timeit import default_timer as timer
+from tqdm.auto import tqdm
+from torchinfo import summary
+from modules.data_loaders import LoadDataFromPath, LoadDataSplit
+from modules.engine import train_step, eval_step, EvaluateOnTest_pt, EvaluateOnTest_onnx
+from modules.utility import  measure_time, PerformanceGraph, save_model, load_model
+
+def train_model(model: torch.nn.Module,
+                train_loader: torch.utils.data.DataLoader,
+                val_loader: torch.utils.data.DataLoader,
+                loss_fn: torch.nn.Module,
+                optimizer: torch.optim.Optimizer,
+                device: torch.device,
+                epoch: int):
+    
+    history = {'epoch':[],
+                'train_loss':[],
+                'train_acc':[],
+                'val_loss': [],
+                'val_acc': []}
+    b_start = timer()
+
+    for epc in tqdm(range(1, epoch+1)):
+        s_start = timer()
+        train_loss, train_acc = train_step(model=model, optimizer=optimizer,
+                                            loss_fn=loss_fn, data_loader=train_loader,
+                                            device=device)
+        val_loss, val_acc = eval_step(model=model, loss_fn=loss_fn,
+                                        data_loader=val_loader)
+
+        history['epoch'].append(epc)
+        history['train_loss'].append(train_loss)
+        history['val_loss'].append(val_loss)
+        history['train_acc'].append(train_acc)
+        history['val_loss'].append(val_loss)
+
+        print(f"Epoch : {epc}")
+        print(f"Train Accuracy : {(train_acc*100):.2f}%  |  Train Loss : {train_loss:.5f}")
+        print(f"Validation Accuracy : {(val_acc*100):.2f}%  |  Validation Loss : {val_loss:.5f}")
+
+        measure_time(start=s_start, end=timer(), stepper=True)
+    measure_time(start=b_start, end=timer(), stepper=False, device=device)
+    return model, history
+
 
 def main():
     Registry.discover_models('modules.models')
-    all_models = Registry.registered_models()
+    registered_models = Registry.registered_models()
 
     parser = ArgumentParser(description="Simple Command-line tool for Model Training.\nType --help or -h for more commands")
 
-    parser.add_argument("-m","--model", metavar='NAME', help=f"(Case Sensitive) Model to train. Models Listed : {list(all_models.keys())}")
+    parser.add_argument("-m","--model", metavar='NAME', help=f"(Case Sensitive) Model to train. Models Listed : {list(registered_models.keys())}")
     parser.add_argument("-hu","--hidden-units", metavar='NAME', help="(Hyper Parameter) Initializes the model's hidden layers. *Some Models may have pre-initialized hidden units")
     parser.add_argument("-dp","--dir-path", metavar='PATH', help="(Optional) Sets the data path. *Only Use if data is not splitted")
     parser.add_argument("-dtr","--dir-train", metavar='PATH', help="(Optional) Path to train dataset")
@@ -85,12 +131,6 @@ def main():
         if arg_name == 'device':
             device = val.lower()
 
-
-    import torch
-    from modules.data_loaders import LoadDataFromPath, LoadDataSplit
-    from modules.engine import train_step, eval_step
-    from modules.utility import measure_accuracy, measure_time, PerformanceGraph, save_model, load_model
-
     model_save_name = save_name + format
 
     if device == 'cuda':
@@ -106,14 +146,74 @@ def main():
         data = LoadDataFromPath(data_dir=dir_path, verbose=verbose, batch_size=batch_size)
         train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx = data
 
-    # load model
-    model = all_models[model_name](input_shape=input_shape, 
+    # creating dummy inputs for torchinfo
+    dummy_img, _ = next(iter(train_loader))
+    dummy_input = torch.rand_like(dummy_img)
+
+    # Initialize model
+    model = registered_models[model_name](input_shape=input_shape, 
                                    output_shape=output_shape, 
                                    hidden_units=hidden_unit).to(device)
+
+    summary(model=model, input_data=dummy_input)
+
+    # Initialize optimizer, loss function
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
+    # train model
+    model, history = train_model(model=model, 
+                                train_loader=train_loader,
+                                val_loader=val_loader,
+                                loss_fn=loss_fn,
+                                optimizer=optimizer,
+                                device=device,
+                                epoch=epoch)
 
+    # save model
+    model_path = save_model(model=model, 
+               model_name=model_save_name, 
+               format=format,
+               device=device,
+               dummy_input=dummy_input)
+
+    del model
+    gc.collext()
+    PerformanceGraph(results=history)
+
+    model_class = registered_models[model_name](input_shape=input_shape, 
+                                       output_shape=output_shape, 
+                                       hidden_units=hidden_unit).to(device)
+
+    loaded_model = load_model(model_path=model_path, 
+                format=format,
+                device=device,
+                input_shape=input_shape,
+                output_shape=output_shape,
+                hidden_units=hidden_unit,
+                model_class=model_class
+               )
+    mean_acc = 0
+    if format.lower() == '.pt':
+        mean_acc = EvaluateOnTest_pt(model=loaded_model, 
+                                    data_loader=test_loader,  
+                                    device=device)
+    elif format.lower() == '.onnx':
+        mean_acc = EvaluateOnTest_onnx(ort_session=loaded_model, 
+                                    data_loader=test_loader)
+    else:
+        raise ValueError(f"Unsupported format '{format}'. Please use '.pt' or '.onnx'.")
+    m = f"""
+    *Evaluation on Complete Unseen Data
+    ---- Test Score ----
+    Model Name : {model_name}
+    Model Format : {format}
+    Model Location : {model_path}
+
+    Mean Accuracy : {(mean_acc*100):.2f}%
+    ---- END ----
+
+"""
 
 if __name__ == '__main__':
     main()
