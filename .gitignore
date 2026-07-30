@@ -1,0 +1,3 @@
+.venv
+modules/__pycache__
+modules/models/__pycache__
