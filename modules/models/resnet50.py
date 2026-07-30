@@ -47,6 +47,9 @@ class ResidualBlock(nn.Module):
 @Registry.register_model
 class Resnet50(nn.Module):
     def __init__(self, input_shape, output_shape, **kwargs):
+        if 'hidden_units' in kwargs.keys():
+            print("Hidden Units Pre Initialized")
+
         super().__init__()
         self.in_channels = 64
 

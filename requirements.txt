@@ -1,0 +1,9 @@
+numpy
+torch
+torchvision
+torchinfo
+torchmetrics
+onnxscript
+tqdm
+matplotlib
+onnxruntime
