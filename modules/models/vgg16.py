@@ -1,6 +1,9 @@
 import torch
 from torch import nn
+from modules.model_registry import Registry
 
+
+@Registry.register_model
 class VGG16(nn.Module):
     def __init__(self, input_shape, output_shape, kernel_size=3, padding=1, **kwargs):
         

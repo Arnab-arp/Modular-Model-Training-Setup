@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from modules.model_registry import Registry
 
 
 class ResidualBlock(nn.Module):
@@ -43,6 +44,7 @@ class ResidualBlock(nn.Module):
         out = self.relu(out)
         return out
 
+@Registry.register_model
 class Resnet50(nn.Module):
     def __init__(self, input_shape, output_shape, **kwargs):
         super().__init__()

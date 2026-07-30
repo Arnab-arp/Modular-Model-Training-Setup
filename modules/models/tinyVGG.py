@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
+from modules.model_registry import Registry
 
+
+@Registry.register_model
 class TinyVGG(nn.Module):
     """Creates the TinyVGG architecture.
 

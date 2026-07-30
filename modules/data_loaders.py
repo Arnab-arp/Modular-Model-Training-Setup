@@ -13,6 +13,7 @@ def LoadDataFromPath(train_path, val_path, test_path, batch_size=32, verbose=Tru
     workers = os.cpu_count()
     train_loader, val_loader, test_loader = None, None, None
     classes, cls2idx = None, None
+    input_shape, output_shape = None, None
     try:
         train_data = ImageFolder(root=train_path,
                                 transform=TRAIN_TRANSFORM,
@@ -39,6 +40,8 @@ def LoadDataFromPath(train_path, val_path, test_path, batch_size=32, verbose=Tru
                                 shuffle=False,
                                 batch_size=batch_size,
                                 num_workers=workers)
+        input_shape = list(next(iter(train_loader)).shape)[1] #[Batch Size, Color Channels, Height, Width]
+        output_shape = len(classes)
         if verbose:
             print("Data Loaded")
             m = f"""
@@ -63,7 +66,7 @@ Image Shape : {list(next(iter(train_loader))[0].shape)}
     except Exception as e:
         print(f"Failed Loading Data from Paths\n{e}")
     finally:
-        return train_loader, val_loader, test_loader, classes, cls2idx
+        return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
 
 
 class TransformSubset(Dataset):
@@ -90,6 +93,7 @@ def LoadDataSplit(data_dir, ratio=(0.75, 0.15, 0.1), batch_size=32, verbose=True
     workers = os.cpu_count()
     train_loader, val_loader, test_loader = None, None, None
     classes, cls2idx = None, None
+    input_shape, output_shape = None, None
 
     try:
         full_data = ImageFolder(root=data_dir, transform=None)
@@ -116,6 +120,9 @@ def LoadDataSplit(data_dir, ratio=(0.75, 0.15, 0.1), batch_size=32, verbose=True
                                 shuffle=False,
                                 batch_size=batch_size,
                                 num_workers=workers)
+        input_shape = list(next(iter(train_loader)).shape)[1] #[Batch Size, Color Channels, Height, Width]
+        output_shape = len(classes)
+
         if verbose:
             print("Data Loaded")
             m = f"""
@@ -140,8 +147,7 @@ Image Shape : {list(next(iter(train_loader))[0].shape)}
     except Exception as e:
         print(f"Failed Loading Data from Paths\n{e}")
     finally:
-        return train_loader, val_loader, test_loader, classes, cls2idx
-
+        return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
 
 if __name__ == "__main__":
     ds_pth = r"C:\Users\Arnab\Desktop\Small"

@@ -20,8 +20,3 @@ def measure_accuracy(y_logit, y_true):
 
 def PerformanceGraph(results):
     pass
-
-ints = []       
-for i in range(1, 101): 
-    print(i*0.75
-    )
