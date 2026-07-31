@@ -78,7 +78,7 @@ def main():
     epoch = None
     verbose = True
     save_name = None
-    model_format = None
+    format = None
     device = None
 
 
@@ -146,21 +146,52 @@ def main():
         data = LoadDataFromPath(data_dir=dir_path, verbose=verbose, batch_size=batch_size)
         train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx = data
 
+    if not train_loader or not test_loader or not val_loader or not input_shape or not output_shape:
+        raise ValueError("Data Did Not Load")
+    
     # creating dummy inputs for torchinfo
     dummy_img, _ = next(iter(train_loader))
-    dummy_input = torch.rand_like(dummy_img)
+    dummy_input = torch.rand_like(dummy_img).to(device)
 
     # Initialize model
     model = registered_models[model_name](input_shape=input_shape, 
                                    output_shape=output_shape, 
                                    hidden_units=hidden_unit).to(device)
-
-    summary(model=model, input_data=dummy_input)
-
     # Initialize optimizer, loss function
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
+
+    print(f"""
+----- Description -----
+Model : {model_name}
+Save Name : {model_save_name}
+Device : {device}
+Loss Function : {loss_fn}
+Optimizer : {optimizer}
+-----------------------
+
+----- Hyperparameters -----
+Batch Size : {batch_size}
+Epoch : {epoch}
+Learning Rate : {lr}
+Input Shape : {input_shape}
+Output Shape : {output_shape}
+Hidden Units: {hidden_unit}
+---------------------------
+
+----- Loaders -----
+Classes : {classes}
+Class Indexes : {cls2idx}
+Image Shape : {dummy_input.shape}
+Loaders -|> Train : {len(train_loader)}
+         |> Validation : {len(val_loader)}
+         |> Test : {len(test_loader)}
+-------------------
+[*] Performing Smoke Test
+""")
+    summary(model=model, input_data=dummy_input)
+    print("[*] Smoke Test Passed\n[*] Starting Training")
     # train model
     model, history = train_model(model=model, 
                                 train_loader=train_loader,
@@ -179,6 +210,7 @@ def main():
 
     del model
     gc.collext()
+    
     PerformanceGraph(results=history)
 
     model_class = registered_models[model_name](input_shape=input_shape, 

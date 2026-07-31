@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 import onnxruntime as ort
-from modules.utility import measure_accuracy
+from timeit import default_timer as timer
+from modules.utility import measure_accuracy, measure_time
 
 def train_step(model: torch.nn.Module, 
                data_loader: torch.utils.data.DataLoader, 
@@ -58,6 +59,7 @@ def EvaluateOnTest_pt(model: torch.nn.Module,
                device: torch.device):
     accuracy = 0
     model.eval()
+    s = timer()
     with torch.inference_mode():
         for batch, (X, y) in enumerate(data_loader):
             X, y = X.to(device), y.to(device)
@@ -65,7 +67,7 @@ def EvaluateOnTest_pt(model: torch.nn.Module,
 
             accuracy += measure_accuracy(y_logit=y_logit_val, y_true=y)
     mean_accuracy = accuracy/len(data_loader)
-
+    measure_time(start=s, end=timer(), stepper=False, device=device)
     return mean_accuracy
 
 
@@ -74,6 +76,7 @@ def EvaluateOnTest_onnx(ort_session:ort.InferenceSession,
     input_name = ort_session.get_inputs().name
     output_name = ort_session.get_outputs().name
     total_correct = 0
+    s = timer()
     for X, y in data_loader:
         x_numpy = X.detach().cpu().numpy().astype(np.float32)
         y_numpy = y.detach().cpu().numpy()
@@ -83,4 +86,5 @@ def EvaluateOnTest_onnx(ort_session:ort.InferenceSession,
         preds = np.argmax(y_logits, axis=1)
         total_correct += (preds == y_numpy).sum()/len(y_logits)
     mean_accuracy = total_correct / len(data_loader)
+    measure_time(start=s, end=timer(), stepper=False, device='cpu')
     return mean_accuracy

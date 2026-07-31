@@ -3,6 +3,7 @@ import torch
 from torch import nn
 from torch.onnx import export
 import onnxruntime as ort
+from matplotlib import pyplot as plt
 
 def measure_time(start, end, device=None, stepper=False):
     measurement = f"{(end-start):.2f} sec"
@@ -23,7 +24,28 @@ def measure_accuracy(y_logit, y_true):
     return acc
 
 def PerformanceGraph(results):
-    pass
+    loss = results['train_loss']
+    test_loss = results['val_loss']
+    acc = results['train_acc']
+    test_acc = results['val_acc']
+    epochs = results['epoch']
+
+    plt.figure(figsize=(15, 7))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, loss, label='Train loss')
+    plt.plot(epochs, test_loss, label='Val loss')
+    plt.title('Loss')
+    plt.xlabel('Epochs')
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, acc, label='Train acc')
+    plt.plot(epochs, test_acc, label='Val acc')
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.legend()
+    plt.show()
+    plt.close
 
 
 def save_model(model: nn.Module, 
