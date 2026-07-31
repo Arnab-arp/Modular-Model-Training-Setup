@@ -3,6 +3,7 @@ import numpy as np
 import onnxruntime as ort
 from tqdm.auto import tqdm
 from timeit import default_timer as timer
+from tqdm import tqdm
 from modules.utility import measure_accuracy, measure_time
 
 def train_step(model: torch.nn.Module, 
@@ -14,7 +15,7 @@ def train_step(model: torch.nn.Module,
     train_loss, train_accuracy = 0, 0
     model.train()
 
-    for batch, (X,y) in enumerate(data_loader):
+    for batch, (X,y) in tqdm(enumerate(data_loader), desc="Training Step"):
         X = X.to(device)
         y = y.to(device)
         y_logit = model(X)
@@ -42,7 +43,7 @@ def eval_step(model: torch.nn.Module,
     val_loss, val_accuracy = 0, 0
     model.eval()
     with torch.inference_mode():
-        for batch, (X, y) in enumerate(data_loader):
+        for batch, (X, y) in tqdm(enumerate(data_loader), desc="Validation Step"):
             X, y = X.to(device), y.to(device)
             y_logit_val = model(X)
             loss = loss_fn(y_logit_val, y)

@@ -38,9 +38,9 @@ def train_model(model: torch.nn.Module,
         history['train_acc'].append(train_acc)
         history['val_acc'].append(val_acc)
 
-        print(f"Epoch : {epc}")
-        print(f"Train Accuracy : {(train_acc*100):.2f}%  |  Train Loss : {train_loss:.5f}")
-        print(f"Validation Accuracy : {(val_acc*100):.2f}%  |  Validation Loss : {val_loss:.5f}")
+        print(f"\n   Epoch : {epc}")
+        print(f"    Train Accuracy : {(train_acc*100):.2f}%  |  Train Loss : {train_loss:.5f}")
+        print(f"    Validation Accuracy : {(val_acc*100):.2f}%  |  Validation Loss : {val_loss:.5f}")
 
         measure_time(start=s_start, end=timer(), stepper=True)
     measure_time(start=b_start, end=timer(), stepper=False, device=device)
