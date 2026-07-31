@@ -3,7 +3,7 @@ import gc
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import ImageFolder
 from torch.utils.data import random_split
-from data_trainsforms import(
+from modules.data_trainsforms import(
     TRAIN_TRANSFORM,
     TEST_TRANSFORM,
     VALIDATION_TRANSFORM

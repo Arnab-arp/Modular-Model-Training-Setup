@@ -1,4 +1,5 @@
 import os
+import platform
 from importlib import import_module
 
 
@@ -22,6 +23,7 @@ class ModelRegistry:
     """
     def __init__(self):
         self._registry = {}
+        self._os = platform.system().lower()
 
     def register_model(self, cls):
         self._registry[cls.__name__] = cls
@@ -34,7 +36,11 @@ class ModelRegistry:
         return self._registry
 
     def discover_models(self, models_dir="modules.models"):
-        sub_path = models_dir.replace('.', '\\')
+        if self._os == 'windows':
+            sub_path = models_dir.replace('.', '\\')
+        else:
+            sub_path = models_dir.replace('.', '/')
+            
         abs_path = os.path.join(os.getcwd(), sub_path)
 
         if not os.path.exists(abs_path):

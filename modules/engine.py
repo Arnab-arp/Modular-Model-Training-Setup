@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import onnxruntime as ort
+from tqdm.auto import tqdm
 from timeit import default_timer as timer
 from modules.utility import measure_accuracy, measure_time
 
@@ -10,7 +11,7 @@ def train_step(model: torch.nn.Module,
                optimizer: torch.optim.Optimizer, 
                device: torch.device):
 
-    train_loss, train_accuracy = 0
+    train_loss, train_accuracy = 0, 0
     model.train()
 
     for batch, (X,y) in enumerate(data_loader):
@@ -61,7 +62,7 @@ def EvaluateOnTest_pt(model: torch.nn.Module,
     model.eval()
     s = timer()
     with torch.inference_mode():
-        for batch, (X, y) in enumerate(data_loader):
+        for batch, (X, y) in tqdm(enumerate(data_loader), desc='Evaluating PT Model'):
             X, y = X.to(device), y.to(device)
             y_logit_val = model(X)
 
@@ -77,7 +78,7 @@ def EvaluateOnTest_onnx(ort_session:ort.InferenceSession,
     output_name = ort_session.get_outputs().name
     total_correct = 0
     s = timer()
-    for X, y in data_loader:
+    for X, y in tqdm(data_loader, desc='Evaluating ONNX Model'):
         x_numpy = X.detach().cpu().numpy().astype(np.float32)
         y_numpy = y.detach().cpu().numpy()
 

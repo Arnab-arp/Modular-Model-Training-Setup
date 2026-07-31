@@ -62,7 +62,7 @@ def save_model(model: nn.Module,
             obj=model.state_dict(),
             f=model_path
         )
-        print(f"Model successfully saved to {model_path}")
+        print(f"[*] PT Model successfully saved to {model_path}")
         return model_path
     
     elif format.lower() == '.onnx':
@@ -81,7 +81,7 @@ def save_model(model: nn.Module,
                 'x': {0: 'batch_size'},   # Specifies axis 0 as dynamic 'batch_size'
             }
         )
-        print(f"ONNX model successfully exported to {model_path}")
+        print(f"[*] ONNX model successfully exported to {model_path}")
         return model_path
     else:
         raise ValueError(f"Unsupported format '{format}'. Please use '.pt' or '.onnx'.")
@@ -105,11 +105,11 @@ def load_model(model_path: str,
             raise ValueError("You must provide the `model_class` argument to load a PyTorch (.pt) state dict.")
         model:nn.Module = model_class(input_shape=input_shape, 
                             output_shape=output_shape, 
-                            hidden_units=hidden_units)
+                            hidden_units=hidden_units).to(device)
         model.load_state_dict(torch.load(model_path, map_location=device))
         model.to(device)
         model.eval()
-        print(f"Model loaded successfully loaded from {model_path}")
+        print(f"[*] PT Model successfully loaded from {model_path}")
         return model
 
     elif format.lower() == '.onnx':
@@ -119,7 +119,7 @@ def load_model(model_path: str,
         else:
             providers = ['CPUExecutionProvider']
         ort_session = ort.InferenceSession(model_path, providers=providers)
-        print(f"ONNX model successfully loaded from {model_path}")
+        print(f"[*] ONNX Model successfully loaded from {model_path}")
         return ort_session
     else:
         raise ValueError(f"Unsupported format '{format}'. Please use '.pt' or '.onnx'.")

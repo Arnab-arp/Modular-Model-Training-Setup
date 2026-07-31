@@ -30,13 +30,13 @@ def train_model(model: torch.nn.Module,
                                             loss_fn=loss_fn, data_loader=train_loader,
                                             device=device)
         val_loss, val_acc = eval_step(model=model, loss_fn=loss_fn,
-                                        data_loader=val_loader)
+                                        data_loader=val_loader, device=device)
 
         history['epoch'].append(epc)
         history['train_loss'].append(train_loss)
         history['val_loss'].append(val_loss)
         history['train_acc'].append(train_acc)
-        history['val_loss'].append(val_loss)
+        history['val_acc'].append(val_acc)
 
         print(f"Epoch : {epc}")
         print(f"Train Accuracy : {(train_acc*100):.2f}%  |  Train Loss : {train_loss:.5f}")
@@ -53,7 +53,7 @@ def main():
 
     parser = ArgumentParser(description="Simple Command-line tool for Model Training.\nType --help or -h for more commands")
 
-    parser.add_argument("-m","--model", metavar='NAME', help=f"(Case Sensitive) Model to train. Models Listed : {list(registered_models.keys())}")
+    parser.add_argument("-m","--model", metavar='NAME', help=f"(Case Sensitive) Model to train. Models Listed : {registered_models.keys()}")
     parser.add_argument("-hu","--hidden-units", metavar='NAME', help="(Hyper Parameter) Initializes the model's hidden layers. *Some Models may have pre-initialized hidden units")
     parser.add_argument("-dp","--dir-path", metavar='PATH', help="(Optional) Sets the data path. *Only Use if data is not splitted")
     parser.add_argument("-dtr","--dir-train", metavar='PATH', help="(Optional) Path to train dataset")
@@ -209,13 +209,11 @@ Loaders -|> Train : {len(train_loader)}
                dummy_input=dummy_input)
 
     del model
-    gc.collext()
-    
+    gc.collect()
+
     PerformanceGraph(results=history)
 
-    model_class = registered_models[model_name](input_shape=input_shape, 
-                                       output_shape=output_shape, 
-                                       hidden_units=hidden_unit).to(device)
+    model_class = registered_models[model_name]
 
     loaded_model = load_model(model_path=model_path, 
                 format=format,
@@ -246,6 +244,6 @@ Loaders -|> Train : {len(train_loader)}
     ---- END ----
 
 """
-
+    print(m)
 if __name__ == '__main__':
     main()
