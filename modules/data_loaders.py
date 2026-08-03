@@ -65,11 +65,11 @@ Image Shape : {list(next(iter(train_loader))[0].shape)}
 """     
             print(m)
         del workers, train_data, val_data, test_data
-        gc.collect()
     except Exception as e:
         print(f"Failed Loading Data from Paths\n{e}")
     finally:
-        return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
+        gc.collect()
+    return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
 
 
 class TransformSubset(Dataset):
@@ -148,11 +148,11 @@ Image Shape : {list(next(iter(train_loader))[0].shape)}
 """     
             print(m)
             del workers, train_data, val_data, test_data
-            gc.collect()
     except Exception as e:
         print(f"Failed Loading Data from Paths\n{e}")
     finally:
-        return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
+        gc.collect()
+    return train_loader, val_loader, test_loader, input_shape, output_shape, classes, cls2idx
 
 if __name__ == "__main__":
     ds_pth = r"C:\Users\Arnab\Desktop\Small"
